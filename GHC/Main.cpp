@@ -4,6 +4,7 @@
 #include <conio.h>
 #include "cstdlib"
 #include <time.h>
+//#include <graphics.h>
 #if defined(__WIN32__) || defined(_WIN32) || defined(WIN32) || defined(__WINDOWS__) || defined(__TOS_WIN__)
 
     #include <windows.h>
@@ -29,8 +30,10 @@ const int n=20; //высота поля
 const int m=20; //ширина поля
 const int s1=10; //время падения в мс
 const int n1=1; //высота нажатия
+const int proval=1; //пропусков до провала
 const int sec=5000;
 unsigned a[n][5],dl[5];
+int och=0,tec=0;
 
 void gotoxy(int xpos, int ypos)
 {
@@ -52,23 +55,28 @@ void nov(int q)
 {
     int x=q*m/6;
     int y=n/10;
-    dl[q]++;
     a[dl[q]][q]=y;
+    dl[q]++;
 
     // рисуешь круг с координатами (х;у)
 }
 
 void sm(int q)
 {
-    int i;
+    int i,k;
 
-    for (i=1;i<dl[q];i++) //смещаем все элементы массива на 1 назад
+    if (dl[q]>0)// && (a[0][q]>n-2*n1))
     {
-        a[i-1][q]=a[i][q];
-
+        och++;if (tec<proval) tec++;
+        for (i=1;i<dl[q];i++) //смещаем все элементы массива на 1 назад
+        {
+            a[i-1][q]=a[i][q];
+        }
+        k=dl[q];
+        a[k-1][q]=0;
+        dl[q]=k;
+        dl[q]--;
     }
-    a[dl[q]][q]=0;
-    dl[q]--;
 
     //удаляешь фигуру
 }
@@ -79,16 +87,16 @@ void vniz()
 
     for (i=0;i<5;i++)
     {
-        for (k=0;k<a[dl[i]][i];k++)
+        for (k=0;k<dl[i];k++)
         {
             int x1=i*n/6;
             int y1=a[k][i];  //координаты фигуры сейчас (если нужны)
             int x2=x1;
             int y2=a[k][i]+(n-n1)/s1; //координаты фигур после перемещения
-            a[k][i]=y2;
+            a[k][i]+=((n-n1)/s1);
             if (y1>n-10)
             {
-                sm(i);
+                sm(i);och-=2;tec-=2;
             }
             else
             {
@@ -100,7 +108,6 @@ void vniz()
 
 int main(void)
 {
-    //setlocale(LC_ALL, "Russian");
 
     srand(time(NULL));
 
@@ -111,9 +118,9 @@ int main(void)
     bool fl=true;
 
     for (i=0;i<5;i++) // зануляем все длины
-        dl[i]=-1;
+        dl[i]=0;
 
-   // cin>>sec;sec=sec*1000+100000;  //длительность песни
+    //cin>>sec;sec=sec*1000+100000;  //длительность песни
 
     int c[sec];         //здесь должна быть нормальная музыка
     {
@@ -133,28 +140,21 @@ int main(void)
         }
     }
 
-    for (i=0;i<n;i++)
-        {
-            cout<<"\n";
-            for (k=0;k<5;k++)
-            {
-                cout<<a[i][k]<<" ";
-            }
-        }
-
     system("cls");
     while (sec!=(s+100000))
     {
-        ch=0;
+        cout<<"ochki="<<och;
+        cout<<" vremay"<<int(s/60000)<<":"<<((s/1000)%60)<<"\n";
+        if (tec<=(-1*proval)) { cout<<"Polnii proval";fl=false; }
 
-        s++; // увеличиваем кол-во мс
+        ch=0; s++; // увеличиваем кол-во мс
 
         Beep(c[s]*1000,1); // воспроизводим мелодию
 
-        if (b[s+s1]!=0) { gotoxy(20,20);cout<<b[s+s1]; nov(b[s+s1]-1);  } // если есть нота то создаем ее
+        if (b[s+s1]!=0) { nov(b[s+s1]-1);  } // если есть нота то создаем ее
 
-        result=_kbhit();cout<<result<<"\n"; //если была нажат клавша
-        if (result!=0) { ch=_getch(); gotoxy(20,25); cout<<ch; }   //то мы считываем ее в ch
+        result=_kbhit(); //если была нажат клавша
+        if (result!=0) { ch=_getch(); }   //то мы считываем ее в ch
 
         e=0;
         switch (ch)  //определение колонки которая нажата
@@ -173,7 +173,7 @@ int main(void)
             case 'q':{ cout<<"programma priostanovlena";_getch();break; }
         }
 
-        if (e!=0) { /*if ((a[0][e-1]>n1-20) && (a[0][e-1]<n1+20))*/ { cout<<"asd";sm(e-1); } }
+        if (e!=0) sm(e-1);
         // если была нажата клавиша то удаляем элемент
 
         vniz(); // опускаем все круги вниз
@@ -193,6 +193,9 @@ int main(void)
 
         if (fl==false) break;
     }
+
     cout<<"igra bila zakonchena";
+
     return 0;
 }
+
